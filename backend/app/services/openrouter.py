@@ -32,6 +32,31 @@ AVAILABLE_MODELS = [
 ]
 
 
+def _sanitize_json_string(text: str) -> str:
+    """Collapse literal newlines/tabs inside JSON string values into spaces."""
+    result = []
+    in_string = False
+    escape = False
+    for ch in text:
+        if escape:
+            result.append(ch)
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            result.append(ch)
+            continue
+        if ch == '"':
+            in_string = not in_string
+            result.append(ch)
+            continue
+        if in_string and ch in ("\n", "\r", "\t"):
+            result.append(" ")
+            continue
+        result.append(ch)
+    return "".join(result)
+
+
 def _extract_json(text: str) -> dict:
     """Extract JSON from a response that might contain markdown fences or extra text."""
     fenced = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
@@ -43,25 +68,10 @@ def _extract_json(text: str) -> dict:
     if brace_start != -1 and brace_end != -1:
         text = text[brace_start : brace_end + 1]
 
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        # Some models return multi-line strings or trailing commas — fix common issues
-        cleaned = re.sub(r'(?<=": ")(.*?)(?=")', lambda m: m.group(1).replace("\n", " "), text, flags=re.DOTALL)
-        cleaned = re.sub(r",\s*}", "}", cleaned)
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            # Last resort: extract values with regex
-            fields = {}
-            for key in ("food_name", "kcals", "fats_g", "saturated_fats_g", "carbs_g", "proteins_g", "sodium_mg"):
-                m = re.search(rf'"{key}"\s*:\s*(".*?"|[\d.]+)', text, re.DOTALL)
-                if m:
-                    val = m.group(1).strip('"').replace("\n", " ")
-                    fields[key] = val if key == "food_name" else float(val) if "." in val else int(val)
-            if len(fields) >= 7:
-                return fields
-            raise ValueError(f"Could not parse AI response as JSON: {text[:200]}")
+    sanitized = _sanitize_json_string(text)
+    sanitized = re.sub(r",\s*}", "}", sanitized)
+
+    return json.loads(sanitized)
 
 
 async def analyze_food(
