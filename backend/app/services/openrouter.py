@@ -43,7 +43,25 @@ def _extract_json(text: str) -> dict:
     if brace_start != -1 and brace_end != -1:
         text = text[brace_start : brace_end + 1]
 
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        # Some models return multi-line strings or trailing commas — fix common issues
+        cleaned = re.sub(r'(?<=": ")(.*?)(?=")', lambda m: m.group(1).replace("\n", " "), text, flags=re.DOTALL)
+        cleaned = re.sub(r",\s*}", "}", cleaned)
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            # Last resort: extract values with regex
+            fields = {}
+            for key in ("food_name", "kcals", "fats_g", "saturated_fats_g", "carbs_g", "proteins_g", "sodium_mg"):
+                m = re.search(rf'"{key}"\s*:\s*(".*?"|[\d.]+)', text, re.DOTALL)
+                if m:
+                    val = m.group(1).strip('"').replace("\n", " ")
+                    fields[key] = val if key == "food_name" else float(val) if "." in val else int(val)
+            if len(fields) >= 7:
+                return fields
+            raise ValueError(f"Could not parse AI response as JSON: {text[:200]}")
 
 
 async def analyze_food(
