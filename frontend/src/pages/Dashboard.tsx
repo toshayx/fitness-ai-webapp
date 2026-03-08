@@ -29,12 +29,11 @@ export default function DashboardPage() {
     setSaving(true);
     try {
       await api.saveEntry({
-        food_name: pending.result.nutrition.food_name,
+        ...pending.result.nutrition,
         description: pending.description,
         model_used: pending.result.model_used,
         entry_date: dashboard.date,
         ai_response_raw: pending.result.raw_response,
-        ...pending.result.nutrition,
       });
       setPending(null);
       await loadDashboard();
