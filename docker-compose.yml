@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - fitness-data:/app/data
+    expose:
+      - "8000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    depends_on:
+      - backend
+
+volumes:
+  fitness-data:
