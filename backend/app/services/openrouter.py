@@ -1,7 +1,10 @@
 import json
+import logging
 import re
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from app.config import get_settings
 from app.schemas import NutritionData
@@ -71,7 +74,12 @@ def _extract_json(text: str) -> dict:
     sanitized = _sanitize_json_string(text)
     sanitized = re.sub(r",\s*}", "}", sanitized)
 
-    return json.loads(sanitized)
+    try:
+        return json.loads(sanitized)
+    except json.JSONDecodeError as e:
+        logger.error("JSON parse failed. Raw text repr: %r", text)
+        logger.error("Sanitized repr: %r", sanitized)
+        raise ValueError(f"Could not parse AI response: {e}") from e
 
 
 async def analyze_food(
@@ -111,6 +119,7 @@ async def analyze_food(
         ],
         "temperature": 0.3,
         "max_tokens": 500,
+        "response_format": {"type": "json_object"},
     }
 
     async with httpx.AsyncClient(timeout=60) as client:
