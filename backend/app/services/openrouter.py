@@ -30,7 +30,7 @@ Base estimates on standard serving sizes unless a quantity is specified."""
 AVAILABLE_MODELS = [
     {"id": "anthropic/claude-sonnet-4.6", "name": "Claude Sonnet 4.6", "supports_vision": True},
     {"id": "anthropic/claude-opus-4.6", "name": "Claude Opus 4.6", "supports_vision": True},
-    {"id": "google/gemini-3.1-flash-preview", "name": "Gemini 3.1 Flash Preview", "supports_vision": True},
+    {"id": "google/gemini-3-flash-preview", "name": "Gemini 3 Flash Preview", "supports_vision": True},
     {"id": "google/gemini-3.1-pro-preview", "name": "Gemini 3.1 Pro Preview", "supports_vision": True},
 ]
 
@@ -119,8 +119,10 @@ async def analyze_food(
         ],
         "temperature": 0.3,
         "max_tokens": 500,
-        "response_format": {"type": "json_object"},
     }
+
+    if "claude" in model or "gpt" in model:
+        payload["response_format"] = {"type": "json_object"}
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
@@ -134,7 +136,23 @@ async def analyze_food(
         resp.raise_for_status()
 
     data = resp.json()
-    raw_text = data["choices"][0]["message"]["content"]
+
+    if "error" in data:
+        raise ValueError(f"OpenRouter error: {data['error']}")
+
+    choice = data["choices"][0]
+    finish = choice.get("finish_reason", "unknown")
+    raw_text = choice["message"]["content"] or ""
+
+    logger.info("Model: %s | finish_reason: %s | response length: %d", model, finish, len(raw_text))
+
+    if finish != "stop" or len(raw_text) < 20:
+        logger.warning("Incomplete response (finish=%s): %r", finish, raw_text[:300])
+        raise ValueError(
+            f"AI returned an incomplete response (finish_reason={finish}). "
+            "Try a different model or simplify your input."
+        )
+
     parsed = _extract_json(raw_text)
     nutrition = NutritionData(**parsed)
 
