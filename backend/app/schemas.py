@@ -31,7 +31,7 @@ class NutritionData(BaseModel):
 class AnalyzeRequest(BaseModel):
     text: str | None = None
     image_base64: str | None = None
-    model: str = "anthropic/claude-sonnet-4"
+    model: str = "anthropic/claude-sonnet-4.6"
 
 
 class AnalyzeResponse(BaseModel):

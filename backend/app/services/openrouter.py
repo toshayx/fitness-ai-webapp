@@ -25,11 +25,10 @@ If the input contains multiple foods, sum them into a single entry and use a com
 Base estimates on standard serving sizes unless a quantity is specified."""
 
 AVAILABLE_MODELS = [
-    {"id": "anthropic/claude-sonnet-4", "name": "Claude Sonnet 4", "supports_vision": True},
-    {"id": "google/gemini-2.5-flash", "name": "Gemini 2.5 Flash", "supports_vision": True},
-    {"id": "google/gemini-2.5-pro", "name": "Gemini 2.5 Pro", "supports_vision": True},
-    {"id": "openai/gpt-4o", "name": "GPT-4o", "supports_vision": True},
-    {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "supports_vision": True},
+    {"id": "anthropic/claude-sonnet-4.6", "name": "Claude Sonnet 4.6", "supports_vision": True},
+    {"id": "anthropic/claude-opus-4.6", "name": "Claude Opus 4.6", "supports_vision": True},
+    {"id": "google/gemini-3.1-flash-preview", "name": "Gemini 3.1 Flash Preview", "supports_vision": True},
+    {"id": "google/gemini-3.1-pro-preview", "name": "Gemini 3.1 Pro Preview", "supports_vision": True},
 ]
 
 
