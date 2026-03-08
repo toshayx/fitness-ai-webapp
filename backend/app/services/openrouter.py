@@ -11,21 +11,9 @@ from app.schemas import NutritionData
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-SYSTEM_PROMPT = """You are a nutrition expert. Given a food description or image, estimate the nutritional content as accurately as possible.
-
-IMPORTANT: You MUST respond with ONLY a valid JSON object, no markdown, no explanation, no extra text. The JSON must have exactly these fields:
-{
-  "food_name": "short descriptive name of the food",
-  "kcals": <integer>,
-  "fats_g": <number>,
-  "saturated_fats_g": <number>,
-  "carbs_g": <number>,
-  "proteins_g": <number>,
-  "sodium_mg": <number>
-}
-
-If the input contains multiple foods, sum them into a single entry and use a combined name.
-Base estimates on standard serving sizes unless a quantity is specified."""
+SYSTEM_PROMPT = """Nutrition estimator. Reply with ONLY this JSON, nothing else:
+{"food_name":"<short name>","kcals":0,"fats_g":0,"saturated_fats_g":0,"carbs_g":0,"proteins_g":0,"sodium_mg":0}
+Sum multiple foods into one entry. No explanation, no markdown, no text before or after the JSON."""
 
 AVAILABLE_MODELS = [
     {"id": "anthropic/claude-sonnet-4.6", "name": "Claude Sonnet 4.6", "supports_vision": True},
@@ -118,7 +106,7 @@ async def analyze_food(
             {"role": "user", "content": content_parts},
         ],
         "temperature": 0.3,
-        "max_tokens": 500,
+        "max_tokens": 1000,
     }
 
     if "claude" in model or "gpt" in model:
@@ -146,10 +134,10 @@ async def analyze_food(
 
     logger.info("Model: %s | finish_reason: %s | response length: %d", model, finish, len(raw_text))
 
-    if finish != "stop" or len(raw_text) < 20:
-        logger.warning("Incomplete response (finish=%s): %r", finish, raw_text[:300])
+    if finish == "length":
+        logger.warning("Response truncated (finish=length): %r", raw_text[:300])
         raise ValueError(
-            f"AI returned an incomplete response (finish_reason={finish}). "
+            "AI response was cut off (token limit). "
             "Try a different model or simplify your input."
         )
 
