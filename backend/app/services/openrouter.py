@@ -106,7 +106,7 @@ async def analyze_food(
             {"role": "user", "content": content_parts},
         ],
         "temperature": 0.3,
-        "max_tokens": 1000,
+        "max_tokens": 4096,
     }
 
     if "claude" in model or "gpt" in model:
