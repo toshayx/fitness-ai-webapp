@@ -20,6 +20,8 @@ AVAILABLE_MODELS = [
     {"id": "anthropic/claude-opus-4.6", "name": "Claude Opus 4.6", "supports_vision": True},
     {"id": "google/gemini-3-flash-preview", "name": "Gemini 3 Flash Preview", "supports_vision": True},
     {"id": "google/gemini-3.1-pro-preview", "name": "Gemini 3.1 Pro Preview", "supports_vision": True},
+    {"id": "minimax/minimax-m2.7", "name": "MiniMax M2.7", "supports_vision": False},
+    {"id": "stepfun/step-3.5-flash:free", "name": "Step 3.5 Flash (Free)", "supports_vision": False},
 ]
 
 
